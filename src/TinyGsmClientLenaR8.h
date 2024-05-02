@@ -576,7 +576,7 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
 	return 0;
   }
   
-  bool FTPCreateDir (String directoryName) {
+  bool FTPCreateDir(String directoryName) {
     sendAT(GF("+UFTPC=10,\"") + directoryName + "\""); 
 	waitResponse(10000L, GF(GSM_NL "+UUFTPCR:"));
 	streamSkipUntil(',');
@@ -598,331 +598,324 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
   
 //// MQTT
   bool MQTTPublish(String message, String topic, int8_t QoS = 0, bool retainAD = false) {
-	if(QoS < 0 || QoS > 2) return 0;
-	String hexmessage = "";
-	char c[4];
-	for(int i=0; i < message.length(); i++){
-		sprintf(c, "%02x", int(message.charAt(i)));
-		hexmessage += c[0];
-		hexmessage += c[1];
-	}
-	sendAT(GF("+UMQTTC=2,") + String(QoS) + "," + String(int(retainAD)) + ",1,\"" + topic + "\",\"" + hexmessage + "\"");
-	waitResponse(GF("+UUMQTTC: 2,"));
-	int8_t responseresult = streamGetIntBefore('\n');
-	if(responseresult == 1) return 1;
-	return 0;
+    if (QoS < 0 || QoS > 2) {
+      return false;
+    }
+    String hexmessage = "";
+    char c[4];
+    for (int i=0; i < message.length(); i++) {
+      sprintf(c, "%02x", int(message.charAt(i)));
+      hexmessage += c[0];
+      hexmessage += c[1];
+    }
+    sendAT(GF("+UMQTTC=2,") + String(QoS) + "," + String(int(retainAD)) + ",1,\"" + topic + "\",\"" + hexmessage + "\"");
+    waitResponse(GF("+UUMQTTC: 2,"));
+    int8_t responseresult = streamGetIntBefore('\n');
+    return responseresult == 1;
   }
   
   bool MQTTPublishFile(String fileName, String topic, int8_t QoS = 0, bool retainAD = false) {
-	if(QoS < 0 || QoS > 2) return 0;
-	sendAT(GF("+UMQTTC=3,") + String(QoS) + "," + String(int(retainAD)) + ",\"" + topic + "\",\"" + fileName + "\"");
-	waitResponse(GF("+UUMQTTC: 3,"));
-	int8_t responseresult = streamGetIntBefore('\n');
-	if(responseresult == 1) return 1;
-	return 0;
+    if (QoS < 0 || QoS > 2) {
+      return false;
+    }
+    sendAT(GF("+UMQTTC=3,") + String(QoS) + "," + String(int(retainAD)) + ",\"" + topic + "\",\"" + fileName + "\"");
+    waitResponse(GF("+UUMQTTC: 3,"));
+    int8_t responseresult = streamGetIntBefore('\n');
+    return responseresult == 1;
   }
   
   bool MQTTSubscribe(String topic, int8_t maxQoS = 0) {
-	if(maxQoS < 0 || maxQoS > 2) return 0;
-	sendAT(GF("+UMQTTC=4,") + String(maxQoS) + ",\"" + topic + "\"");
-	waitResponse(5000, topic + "\"");
-	return 1;
+    if (maxQoS < 0 || maxQoS > 2) {
+      return false;
+    }
+    sendAT(GF("+UMQTTC=4,") + String(maxQoS) + ",\"" + topic + "\"");
+    waitResponse(5000, topic + "\"");
+    return true;
   }
   
   void MQTTUnsubscribe(String topic) {
-	sendAT(GF("+UMQTTC=5,\"") + topic + "\"");
-	waitResponse();
-	return;
+    sendAT(GF("+UMQTTC=5,\"") + topic + "\"");
+    waitResponse();
   }
   
   void MQTTSetClientID(String clientID) {
-	sendAT(GF("+UMQTT=0,\"") + clientID + "\"");
-	waitResponse();
-	return;
+    sendAT(GF("+UMQTT=0,\"") + clientID + "\"");
+    waitResponse();
   }
   
-  bool MQTTKeepAlive (int keepalive, int linger = 10) {
-	if (keepalive < 0 || keepalive > 65535) return 0;
-	if (linger < 0 || linger > 120) return 0; 
-	sendAT(GF("+UMQTT=10,") + String(keepalive) + "," + String(linger));
-	waitResponse();
-	return 1;
+  bool MQTTKeepAlive(int keepalive, int linger = 10) {
+    if (keepalive < 0 || keepalive > 65535) {
+      return false;
+    }
+    if (linger < 0 || linger > 120) {
+      return false;
+    }
+    sendAT(GF("+UMQTT=10,") + String(keepalive) + "," + String(linger));
+    waitResponse();
+    return true;
   }
   
   void MQTTPingBroker(bool pingON) {
-	sendAT(GF("+UMQTTC=8,") + String(int(pingON)));
-	waitResponse();
-	return;
+    sendAT(GF("+UMQTTC=8,") + String(int(pingON)));
+    waitResponse();
   }
   
   bool MQTTReadMsg(String &topic, String &message) {
-	sendAT(GF("+UMQTTC=6,1"));
-	int toplen = 0, msglen = 0;
-	if (waitResponse(GF("+UMQTTC:")) == 1) {
-	streamSkipUntil(',');//6
-	streamSkipUntil(',');//qos
-	streamSkipUntil(',');//top+msg length
-	//streamSkipUntil(',');//top length
-	toplen = streamGetIntBefore(',');
-	streamSkipUntil('\"');
-	char t[toplen+1];
-	for(int i=0; i < toplen; i++){
-		while(!stream.available()){}
-		t[i] = stream.read();
-	}
-	topic = String(t).substring(0, toplen);
-	//topic = stream.readStringUntil(',');
-	streamSkipUntil(',');
-	msglen = streamGetIntBefore(',');
-	streamSkipUntil('\"');
-	//streamSkipUntil('\"');
-	char m[msglen+1];
-	for(int i=0; i < msglen; i++){
-		while(!stream.available()){}
-		m[i] = stream.read();
-	}
-	message = String(m).substring(0, msglen);
-	//message = stream.readStringUntil('\n');
-	waitResponse();
-	return 1;
-	}
-	return 0;
+    sendAT(GF("+UMQTTC=6,1"));
+    int toplen = 0, msglen = 0;
+    if (waitResponse(GF("+UMQTTC:")) != 1) {
+      return false;
+    }
+    
+    streamSkipUntil(',');//6
+    streamSkipUntil(',');//qos
+    streamSkipUntil(',');//top+msg length
+    //streamSkipUntil(',');//top length
+    toplen = streamGetIntBefore(',');
+    streamSkipUntil('\"');
+    char t[toplen+1];
+    for (int i=0; i < toplen; i++) {
+      while (!stream.available()){}
+      t[i] = stream.read();
+    }
+    topic = String(t).substring(0, toplen);
+    //topic = stream.readStringUntil(',');
+    streamSkipUntil(',');
+    msglen = streamGetIntBefore(',');
+    streamSkipUntil('\"');
+    //streamSkipUntil('\"');
+    char m[msglen+1];
+    for(int i=0; i < msglen; i++){
+      while(!stream.available()) {}
+      m[i] = stream.read();
+    }
+    message = String(m).substring(0, msglen);
+    //message = stream.readStringUntil('\n');
+    waitResponse();
+    return true;
   }
 
   bool MQTTLogin() {
-	sendAT(GF("+UMQTTC=1"));
-	waitResponse(GF("UUMQTTC:"));
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
-	if(responseresult == 1) return 1;
-	return 0;
+    sendAT(GF("+UMQTTC=1"));
+    waitResponse(GF("UUMQTTC:"));
+    streamSkipUntil(',');
+    int8_t responseresult = streamGetIntBefore('\n');
+    if(responseresult == 1) {
+      return 1;
+    }
+    return 0;
   }
   
-  void MQQTLogout() {
-	sendAT(GF("+UMQTTC=0"));
-	waitResponse();
+  void MQTTLogout() {
+    sendAT(GF("+UMQTTC=0"));
+    waitResponse();
   }
 
-  bool MQTTSaveProfile () {
-	sendAT(GF("+UMQTTNV=2"));
-	waitResponse(GF("UMQTTNV:"));
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
-	waitResponse();
-	if(responseresult == 1) return 1;
-	return 0;
+  bool MQTTSaveProfile() {
+    sendAT(GF("+UMQTTNV=2"));
+    waitResponse(GF("UMQTTNV:"));
+    streamSkipUntil(',');
+    int8_t responseresult = streamGetIntBefore('\n');
+    waitResponse();
+    return responseresult == 1;
   }
   
-   bool MQTTLoadProfile () {
-	sendAT(GF("+UMQTTNV=1"));
-	waitResponse(GF("UMQTTNV:"));
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
-	if(responseresult == 1) return 1;
-	return 0;
+  bool MQTTLoadProfile() {
+    sendAT(GF("+UMQTTNV=1"));
+    waitResponse(GF("UMQTTNV:"));
+    streamSkipUntil(',');
+    int8_t responseresult = streamGetIntBefore('\n');
+    return responseresult == 1;
   }
   
-  bool MQTTResetProfile () {
-	sendAT(GF("+UMQTTNV=0"));
-	waitResponse(GF("UMQTTNV:"));
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
-	if(responseresult == 1) return 1;
-	return 0;
+  bool MQTTResetProfile() {
+    sendAT(GF("+UMQTTNV=0"));
+    waitResponse(GF("UMQTTNV:"));
+    streamSkipUntil(',');
+    int8_t responseresult = streamGetIntBefore('\n');
+    return responseresult == 1;
   }
   
-  void MQTTUseSSL (String certName) {
-	sendAT(GF("+USECPRF=2,0,1"));
-	waitResponse();
-	sendAT(GF("+USECPRF=2,3,\"") + certName + "\"");
-	waitResponse();
-	sendAT(GF("+UMQTT=11,1,2"));
-	waitResponse();
-	return;
+  void MQTTUseSSL(String certName) {
+    sendAT(GF("+USECPRF=2,0,1"));
+    waitResponse();
+    sendAT(GF("+USECPRF=2,3,\"") + certName + "\"");
+    waitResponse();
+    sendAT(GF("+UMQTT=11,1,2"));
+    waitResponse();
   } 
    
   void MQTTUseSSL (String certName, String clientCertName, String clientKeyName, String password = "") {
-	sendAT(GF("+USECPRF=2,0,1"));
-	waitResponse();
-	sendAT(GF("+USECPRF=2,3,\"") + certName + "\"");
-	waitResponse();
-	sendAT(GF("+USECPRF=2,5,\"") + clientCertName + "\"");
-	waitResponse();
-	sendAT(GF("+USECPRF=2,6,\"") + clientKeyName + "\"");
-	waitResponse();
-	if (password != "") {
-	  sendAT(GF("+USECPRF=2,7,\"") + password + "\"");
-	  waitResponse();
-	}
-	sendAT(GF("+UMQTT=11,1,2"));
-	waitResponse();
-	return;
+    sendAT(GF("+USECPRF=2,0,1"));
+    waitResponse();
+    sendAT(GF("+USECPRF=2,3,\"") + certName + "\"");
+    waitResponse();
+    sendAT(GF("+USECPRF=2,5,\"") + clientCertName + "\"");
+    waitResponse();
+    sendAT(GF("+USECPRF=2,6,\"") + clientKeyName + "\"");
+    waitResponse();
+    if (password != "") {
+      sendAT(GF("+USECPRF=2,7,\"") + password + "\"");
+      waitResponse();
+    }
+    sendAT(GF("+UMQTT=11,1,2"));
+    waitResponse();
   } 
    
   void MQTTSetBroker(String server, int port) {
-	sendAT(GF("+UMQTT=2,\"") + server + "\"," + port);
-	waitResponse();
-	return;
+    sendAT(GF("+UMQTT=2,\"") + server + "\"," + port);
+    waitResponse();
   }
   
   void MQTTSetBrokerIP(String serverIP, int port) {
-	sendAT(GF("+UMQTT=3,\"") + serverIP + "\"," + port);
-	waitResponse();
-	return;
+    sendAT(GF("+UMQTT=3,\"") + serverIP + "\"," + port);
+    waitResponse();
   }
   
   void MQTTSetUserPass(String user, String pass) {
-	sendAT(GF("+UMQTT=4,\"") + user + "\",\"" + pass + "\"");
-	waitResponse();
-	return;
+    sendAT(GF("+UMQTT=4,\"") + user + "\",\"" + pass + "\"");
+    waitResponse();
   }
   
   bool MQTTLastWill (int QoS, bool retainWillAD, String willTopic, String willMsg) {
-	if(QoS < 0 || QoS >2) return 0;
-	sendAT(GF("+UMQTT=6,") + QoS);
-	waitResponse();
-	sendAT(GF("+UMQTT=7,") + int(retainWillAD));
-	waitResponse();
-	sendAT(GF("+UMQTT=8,\"") + willTopic + "\"");
-	waitResponse();
-	sendAT(GF("+UMQTT=9,\"") + willMsg + "\"");
-	waitResponse();
-	return 1;
+    if (QoS < 0 || QoS > 2) {
+      return false;
+    }
+    sendAT(GF("+UMQTT=6,") + QoS);
+    waitResponse();
+    sendAT(GF("+UMQTT=7,") + int(retainWillAD));
+    waitResponse();
+    sendAT(GF("+UMQTT=8,\"") + willTopic + "\"");
+    waitResponse();
+    sendAT(GF("+UMQTT=9,\"") + willMsg + "\"");
+    waitResponse();
+    return true;
   }
   
   void MQTTCleanSession(bool cleanSession) {
     if (cleanSession) {
       sendAT(GF("+UMQTT=12,1"));
-	} else {
-	  sendAT(GF("+UMQTT=12,0"));
-	}
-	waitResponse();
-	return;
+    } else {
+      sendAT(GF("+UMQTT=12,0"));
+    }
+    waitResponse();
   }
 
 ////SSL Certificates
-  void addRootCert(String name, char data[]) {
-	int datalength = strlen(data);
-	sendAT(GF("+USECMNG=0,0,\"") + name + "\"," + datalength);
-	waitResponse(">");
-	for (int i = 0; i <= datalength; i++) {
-		stream.write(data[i]);
-	}	
-	waitResponse();
-	return;
+  void addRootCert(String name, const char data[]) {
+    int datalength = strlen(data);
+    sendAT(GF("+USECMNG=0,0,\"") + name + "\"," + datalength);
+    waitResponse(">");
+    for (int i = 0; i <= datalength; i++) {
+      stream.write(data[i]);
+    }
+    waitResponse();
   }
   
   void delRootCert(String name) {
-	sendAT(GF("+USECMNG=2,0,\"") + name + "\"");	
-	waitResponse();
-	return;
+    sendAT(GF("+USECMNG=2,0,\"") + name + "\"");	
+    waitResponse();
   }
   
-  void addClientCert(String name, char data[]) {
-	int datalength = strlen(data);
-	sendAT(GF("+USECMNG=0,1,\"") + name + "\"," + datalength);
-	waitResponse(">");
-	for (int i = 0; i <= datalength; i++) {
-		stream.write(data[i]);
-	}	
-	waitResponse();
-	return;
+  void addClientCert(String name, const char data[]) {
+    int datalength = strlen(data);
+    sendAT(GF("+USECMNG=0,1,\"") + name + "\"," + datalength);
+    waitResponse(">");
+    for (int i = 0; i <= datalength; i++) {
+      stream.write(data[i]);
+    }	
+    waitResponse();
   }
   
   void delClientCert(String name) {
-	sendAT(GF("+USECMNG=2,1,\"") + name + "\"");	
-	waitResponse();
-	return;
+    sendAT(GF("+USECMNG=2,1,\"") + name + "\"");	
+    waitResponse();
   }
   
-  void addClientKey(String name, char data[]) {
-	int datalength = strlen(data);
-	sendAT(GF("+USECMNG=0,2,\"") + name + "\"," + datalength);
-	waitResponse(">");
-	for (int i = 0; i <= datalength; i++) {
-		stream.write(data[i]);
-	}	
-	waitResponse();
-	return;
+  void addClientKey(String name, const char data[]) {
+    int datalength = strlen(data);
+    sendAT(GF("+USECMNG=0,2,\"") + name + "\"," + datalength);
+    waitResponse(">");
+    for (int i = 0; i <= datalength; i++) {
+      stream.write(data[i]);
+    }
+    waitResponse();
   }
   
   void delClientKey(String name) {
-	sendAT(GF("+USECMNG=2,2,\"") + name + "\"");	
-	waitResponse();
-	return;
+    sendAT(GF("+USECMNG=2,2,\"") + name + "\"");	
+    waitResponse();
   }
 
 //// File  
   void addRootCertFile(String name, String filename) {
-	sendAT(GF("+USECMNG=1,0,\"") + name + "\",\"" + filename + "\"");
-	//waitResponse(10000, GF(GSM_NL "+USECMNG"));	
-	waitResponse();
-	return;
+    sendAT(GF("+USECMNG=1,0,\"") + name + "\",\"" + filename + "\"");
+    //waitResponse(10000, GF(GSM_NL "+USECMNG"));	
+    waitResponse();
   }
 
   void addClientCertFile(String name, String filename) {
-	sendAT(GF("+USECMNG=1,1,\"") + name + "\",\"" + filename + "\"");	
-	waitResponse();
-	return;
+    sendAT(GF("+USECMNG=1,1,\"") + name + "\",\"" + filename + "\"");	
+    waitResponse();
   }
   
   void addClientKeyFile(String name, String filename) {
-	sendAT(GF("+USECMNG=1,2,\"") + name + "\",\"" + filename + "\"");
-	waitResponse();
-	return;
+    sendAT(GF("+USECMNG=1,2,\"") + name + "\",\"" + filename + "\"");
+    waitResponse();
   }
 
-  void makeFile(String filename, char data[]){
-	int datalength = strlen(data);
-	sendAT(GF("+UDWNFILE=\"") + filename + "\"," + datalength);
-	waitResponse(">");
-	for (int i = 0; i <= datalength; i++) {
-		stream.write(data[i]);
-	}
-	waitResponse();
-	return;
+  void makeFile(String filename, const char data[]){
+    int datalength = strlen(data);
+    sendAT(GF("+UDWNFILE=\"") + filename + "\"," + datalength);
+    waitResponse(">");
+    for (int i = 0; i <= datalength; i++) {
+    	stream.write(data[i]);
+    }
+    waitResponse();
   }
   
   bool delFile(String filename){
-	sendAT(GF("+UDELFILE=\"") + filename + "\"");
-	if (waitResponse("OK") != 1) { 
-		waitResponse();
-		return 0;
-	}
-	waitResponse();
-	return 1;
+    sendAT(GF("+UDELFILE=\"") + filename + "\"");
+    if (waitResponse("OK") != 1) { 
+      waitResponse();
+      return false;
+    }
+    waitResponse();
+    return true;
   }
   
   int freeFileSpace(){
-	sendAT(GF("+ULSTFILE=1"));
-	waitResponse("+ULSTFILE: ");
-	String res = stream.readStringUntil('\n');
-	char c[8];
-	res.toCharArray(c, 8);
-	int result = atoi(c);
-	return result;
+    sendAT(GF("+ULSTFILE=1"));
+    waitResponse("+ULSTFILE: ");
+    String res = stream.readStringUntil('\n');
+    char c[8];
+    res.toCharArray(c, 8);
+    int result = atoi(c);
+    return result;
   }
   
   int getFileSize(String filename){
-	sendAT("+URDFILE=\"" + filename + "\"");
-	if (waitResponse(GF("+URDFILE:")) != 1) { return 0; }
+    sendAT("+URDFILE=\"" + filename + "\"");
+    if (waitResponse(GF("+URDFILE:")) != 1) {
+      return 0;
+    }
     //waitResponse(GF("+URDFILE:"));
     streamSkipUntil(',');
     int result = streamGetIntBefore(',') - 1;
-	return result;
+    return result;
   }
   
   void getFileData(String filename, char* outChar, int fileSize){
-	sendAT("+URDFILE=\"" + filename + "\"");
+    sendAT("+URDFILE=\"" + filename + "\"");
     waitResponse(GF("+URDFILE:"));
     streamSkipUntil(',');
     streamSkipUntil('\"');
-	String result = "";
+    String result = "";
     for (int i = 0; i <= fileSize; i++) {
-		while(!stream.available()){}
-		outChar[i] = stream.read();
+      while(!stream.available()){}
+      outChar[i] = stream.read();
     }
-	return;
+    return;
   }
   
  ///////////////////////////////////////////////
@@ -933,6 +926,32 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
    * Basic functions
    */
  protected:
+  String getLocalIPImpl() {
+    sendAT(GF("+CGPADDR=1"));
+    if (waitResponse(GF("+CGPADDR:")) != 1) { return ""; }
+    streamSkipUntil('\"');
+    String res = stream.readStringUntil('\"');
+    waitResponse();
+    if (res.startsWith("IPV4:"))
+    {
+      return res.substring(5);
+    }
+    
+    return res;
+
+    // thisModem().streamSkipUntil(',');  // Skip context id
+    // String res = thisModem().stream.readStringUntil('\r');
+    // if (thisModem().waitResponse() != 1) { return ""; }
+    // return res;
+
+    // sendAT(GF("+CNACT?"));
+    // if (waitResponse(GF(GSM_NL "+CNACT:")) != 1) { return ""; }
+    // streamSkipUntil('\"');
+    // String res = stream.readStringUntil('\"');
+    // waitResponse();
+    // return res;
+  }
+
   bool initImpl(const char* pin = NULL) {
     DBG(GF("### TinyGSM Version:"), TINYGSM_VERSION);
     DBG(GF("### TinyGSM Compiled Module:  TinyGsmClientLenaR8"));
