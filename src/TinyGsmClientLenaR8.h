@@ -217,217 +217,184 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
 ////////////////////////////////////////////////
  public:
  
- bool setSimPIN (String pin) {
-	if (pin.length() != 4) return 0;
-	for (int i=0; i<4; i++){
-		if (!isDigit(pin.charAt(i))) return 0;
-	}
-	sendAT(GF("+CLCK=\"SC\",1,\"") + pin + "\"");
-	waitResponse();
-	return 1;
- }
+  bool setSimPIN (String pin) {
+    if (pin.length() != 4) return 0;
+    for (int i=0; i<4; i++){
+      if (!isDigit(pin.charAt(i))) return 0;
+    }
+    sendAT(GF("+CLCK=\"SC\",1,\"") + pin + "\"");
+    waitResponse();
+    return 1;
+  }
  
- bool enterSimPIN (String pin) {
-	if (pin.length() != 4) return 0;
-	for (int i=0; i<4; i++){
-		if (!isDigit(pin.charAt(i))) return 0;
-	}
-	sendAT(GF("+CLCK=\"SC\",0,\"") + pin + "\"");
-	waitResponse();
-	return 1;
- }
+  bool enterSimPIN (String pin) {
+    if (pin.length() != 4) return 0;
+    for (int i=0; i<4; i++){
+      if (!isDigit(pin.charAt(i))) return 0;
+    }
+    sendAT(GF("+CLCK=\"SC\",0,\"") + pin + "\"");
+    waitResponse();
+    return 1;
+  }
  
 //// HTTP
   void HTTPResetProfile() {
     sendAT(GF("+UHTTP=0"));			//reset http profile 0
-	waitResponse();
-	return;
+    waitResponse();
+    return;
   }
   
   void HTTPSetServerIP (String IPAddress, int port) {
-	sendAT(GF("+UHTTP=0,0,\"") + IPAddress + "\"");
-	waitResponse();
-	sendAT(GF("+UHTTP=0,5,\"") + String(port) + "\"");
-	waitResponse();
-	return;
+    sendAT(GF("+UHTTP=0,0,\"") + IPAddress + "\"");
+    waitResponse();
+    sendAT(GF("+UHTTP=0,5,\"") + String(port) + "\"");
+    waitResponse();
+    return;
   }
   
   void HTTPSetServer (String serverName, int port) {
-	sendAT(GF("+UHTTP=0,1,\"") + serverName + "\"");
-	waitResponse();
-	sendAT(GF("+UHTTP=0,5,\"") + String(port) + "\"");
-	waitResponse();
-	return;  
+    sendAT(GF("+UHTTP=0,1,\"") + serverName + "\"");
+    waitResponse();
+    sendAT(GF("+UHTTP=0,5,\"") + String(port) + "\"");
+    waitResponse();
+    return;  
   }
   
   void HTTPSetUserPass (String username, String password) {
-	sendAT(GF("+UHTTP=0,2,\"") + username + "\"");
-	waitResponse();
-	sendAT(GF("+UHTTP=0,3,\"") + password + "\"");
-	waitResponse();
-	sendAT(GF("+UHTTP=0,2,1"));						//set HTTP auth
-	waitResponse();
-	return;
+    sendAT(GF("+UHTTP=0,2,\"") + username + "\"");
+    waitResponse();
+    sendAT(GF("+UHTTP=0,3,\"") + password + "\"");
+    waitResponse();
+    sendAT(GF("+UHTTP=0,2,1"));						//set HTTP auth
+    waitResponse();
+    return;
   }
   
   void HTTPUseSSL (String certName) {
-	sendAT(GF("+USECPRF=0,0,1"));
-	waitResponse();
-	sendAT(GF("+USECPRF=0,3,\"") + certName + "\"");
-	waitResponse();
-	sendAT(GF("+UHTTP=0,6,1,0"));
-	waitResponse();
-	return;
+    sendAT(GF("+USECPRF=0,0,1"));
+    waitResponse();
+    sendAT(GF("+USECPRF=0,3,\"") + certName + "\"");
+    waitResponse();
+    sendAT(GF("+UHTTP=0,6,1,0"));
+    waitResponse();
+    return;
   }
   
   void HTTPUseSSL (String certName, String clientCertName, String clientKeyName, String password = "") {
-	sendAT(GF("+USECPRF=0,0,1"));
-	waitResponse();
-	sendAT(GF("+USECPRF=0,3,\"") + certName + "\"");
-	waitResponse();
-	sendAT(GF("+USECPRF=0,5,\"") + clientCertName + "\"");
-	waitResponse();
-	sendAT(GF("+USECPRF=0,6,\"") + clientKeyName + "\"");
-	waitResponse();
-	if (password != "") {
-	  sendAT(GF("+USECPRF=0,7,\"") + password + "\"");
-	  waitResponse();
-	}
-	sendAT(GF("+UHTTP=0,6,1,0"));
-	waitResponse();
-	return;
+    sendAT(GF("+USECPRF=0,0,1"));
+    waitResponse();
+    sendAT(GF("+USECPRF=0,3,\"") + certName + "\"");
+    waitResponse();
+    sendAT(GF("+USECPRF=0,5,\"") + clientCertName + "\"");
+    waitResponse();
+    sendAT(GF("+USECPRF=0,6,\"") + clientKeyName + "\"");
+    waitResponse();
+    if (password != "") {
+      sendAT(GF("+USECPRF=0,7,\"") + password + "\"");
+      waitResponse();
+    }
+    sendAT(GF("+UHTTP=0,6,1,0"));
+    waitResponse();
+    return;
   } 
   
   //Page 209 LENA-R8 AT Commands Manual
   void HTTPSetCustomReqHeader (String customHeader) {
     sendAT(GF("+UHTTP=0,9,\"") + customHeader + "\"");
-	waitResponse();
-	return;
+    waitResponse();
+    return;
   }
   
   void HTTPSetCookies (String cookie1, String cookie2 = "", String cookie3 = "", String cookie4 = "") {
     sendAT(GF("+UHTTPAC=0,0,0,\"") + cookie1 + "\"");
-	waitResponse();
-	if (cookie2 != "") {
+    waitResponse();
+    if (cookie2 != "") {
       sendAT(GF("+UHTTPAC=0,0,1,\"") + cookie2 + "\"");
-	  waitResponse();
-	}
-	if (cookie3 != "") {
+      waitResponse();
+    }
+    if (cookie3 != "") {
       sendAT(GF("+UHTTPAC=0,0,2,\"") + cookie3 + "\"");
-	  waitResponse();
-	}
-	if (cookie4 != "") {
+      waitResponse();
+    }
+    if (cookie4 != "") {
       sendAT(GF("+UHTTPAC=0,0,3,\"") + cookie4 + "\"");
-	  waitResponse();
-	}
-	return;
+      waitResponse();
+    }
+    return;
   }
   
   void HTTPClearCookies() {
     sendAT(GF("+UHTTPAC=0,0,0,\"\""));
-	waitResponse();
-	sendAT(GF("+UHTTPAC=0,0,1,\"\""));
-	waitResponse();
-	sendAT(GF("+UHTTPAC=0,0,2,\"\""));
-	waitResponse();
-	sendAT(GF("+UHTTPAC=0,0,3,\"\""));
-	waitResponse();
-	return;
+    waitResponse();
+    sendAT(GF("+UHTTPAC=0,0,1,\"\""));
+    waitResponse();
+    sendAT(GF("+UHTTPAC=0,0,2,\"\""));
+    waitResponse();
+    sendAT(GF("+UHTTPAC=0,0,3,\"\""));
+    waitResponse();
+    return;
   }
   
+  bool ReadHTTPResponse() {
+    waitResponse(10000L, GF(GSM_NL "+UUHTTPCR:"));
+    streamSkipUntil(',');
+    streamSkipUntil(',');
+    int8_t responseresult = streamGetIntBefore('\n');
+    waitResponse();
+    return responseresult == 1;
+  }
+
   bool HTTPHead (String remotePath, String responseFileName) {
     sendAT(GF("+UHTTPC=0,0,\"") + remotePath + "\",\"" + responseFileName + "\""); 
-	waitResponse(10000L, GF(GSM_NL "+UUHTTPCR:"));
-	streamSkipUntil(',');
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
-	waitResponse();
-	if(responseresult == 1) return 1;
-	return 0;
+    return ReadHTTPResponse();
   }
   
   bool HTTPGet (String remotePath, String responseFileName) {
     sendAT(GF("+UHTTPC=0,1,\"") + remotePath + "\",\"" + responseFileName + "\""); 
-	waitResponse(10000L, GF(GSM_NL "+UUHTTPCR:"));
-	streamSkipUntil(',');
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
-	waitResponse();
-	if(responseresult == 1) return 1;
-	return 0;
+    return ReadHTTPResponse();
   } 
   
   bool HTTPDelete (String remotePath, String responseFileName) {
     sendAT(GF("+UHTTPC=0,2,\"") + remotePath + "\",\"" + responseFileName + "\""); 
-	waitResponse(10000L, GF(GSM_NL "+UUHTTPCR:"));
-	streamSkipUntil(',');
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
-	waitResponse();
-	if(responseresult == 1) return 1;
-	return 0;
+    return ReadHTTPResponse();
   }
   
   bool HTTPPutFile (String remotePath, String responseFileName, String putFileName) {
     sendAT(GF("+UHTTPC=0,3,\"") + remotePath + "\",\"" + responseFileName + "\",\"" + putFileName + "\""); 
-	waitResponse(10000L, GF(GSM_NL "+UUHTTPCR:"));
-	streamSkipUntil(',');
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
-	waitResponse();
-	if(responseresult == 1) return 1;
-	return 0;
+    return ReadHTTPResponse();
   }
   
   //Content Type:  0=application/x-www-form-urlencoded; 1=text/plain; 2=application/octet-stream
   //3=multipart/form-data; 4=application/json; 5=application/xml; 6=user defined
   bool HTTPPutFile (String remotePath, String responseFileName, String putFileName, uint8_t contentType, String userContentType = "") {
     if (contentType == 6) {
-	  sendAT(GF("+UHTTPC=0,3,\"") + remotePath + "\",\"" + responseFileName + "\",\"" + putFileName + "\",\"" + contentType + "\",\"" + userContentType + "\""); 
-	} else {
-	  sendAT(GF("+UHTTPC=0,3,\"") + remotePath + "\",\"" + responseFileName + "\",\"" + putFileName + "\",\"" + contentType + "\""); 
-	}
-	waitResponse(10000L, GF(GSM_NL "+UUHTTPCR:"));
-	streamSkipUntil(',');
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
-	waitResponse();
-	if(responseresult == 1) return 1;
-	return 0;
+	    sendAT(GF("+UHTTPC=0,3,\"") + remotePath + "\",\"" + responseFileName + "\",\"" + putFileName + "\",\"" + contentType + "\",\"" + userContentType + "\""); 
+	  } else {
+	    sendAT(GF("+UHTTPC=0,3,\"") + remotePath + "\",\"" + responseFileName + "\",\"" + putFileName + "\",\"" + contentType + "\""); 
+	  }
+    return ReadHTTPResponse();
   }
   
   //Content Type:  0=application/x-www-form-urlencoded; 1=text/plain; 2=application/octet-stream
   //3=multipart/form-data; 4=application/json; 5=application/xml; 6=user defined
   bool HTTPPostFile (String remotePath, String responseFileName, String postFileName, uint8_t contentType, String userContentType = "") {
     if (contentType == 6) {
-	  sendAT(GF("+UHTTPC=0,4,\"") + remotePath + "\",\"" + responseFileName + "\",\"" + postFileName + "\",\"" + contentType + "\",\"" + userContentType + "\""); 
-	} else {
-	  sendAT(GF("+UHTTPC=0,4,\"") + remotePath + "\",\"" + responseFileName + "\",\"" + postFileName + "\",\"" + contentType + "\""); 
-	}
-	waitResponse(10000L, GF(GSM_NL "+UUHTTPCR:"));
-	streamSkipUntil(',');
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
-	waitResponse();
-	if(responseresult == 1) return 1;
-	return 0;
+      sendAT(GF("+UHTTPC=0,4,\"") + remotePath + "\",\"" + responseFileName + "\",\"" + postFileName + "\",\"" + contentType + "\",\"" + userContentType + "\""); 
+    } else {
+      sendAT(GF("+UHTTPC=0,4,\"") + remotePath + "\",\"" + responseFileName + "\",\"" + postFileName + "\",\"" + contentType + "\""); 
+    }
+    return ReadHTTPResponse();
   }
   
   //Content Type:  0=application/x-www-form-urlencoded; 1=text/plain; 2=application/octet-stream
   //3=multipart/form-data; 4=application/json; 5=application/xml; 6=user defined
   bool HTTPPostString (String remotePath, String responseFileName, String postString, uint8_t contentType, String userContentType = "") {
     if (contentType == 6) {
-	  sendAT(GF("+UHTTPC=0,5,\"") + remotePath + "\",\"" + responseFileName + "\",\"" + postString + "\",\"" + contentType + "\",\"" + userContentType + "\""); 
-	} else {
-	  sendAT(GF("+UHTTPC=0,5,\"") + remotePath + "\",\"" + responseFileName + "\",\"" + postString + "\",\"" + contentType + "\""); 
-	}
-	waitResponse(10000L, GF(GSM_NL "+UUHTTPCR:"));
-	streamSkipUntil(',');
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
-	waitResponse();
-	if(responseresult == 1) return 1;
-	return 0;
+      sendAT(GF("+UHTTPC=0,5,\"") + remotePath + "\",\"" + responseFileName + "\",\"" + postString + "\",\"" + contentType + "\",\"" + userContentType + "\""); 
+    } else {
+      sendAT(GF("+UHTTPC=0,5,\"") + remotePath + "\",\"" + responseFileName + "\",\"" + postString + "\",\"" + contentType + "\""); 
+    }
+    return ReadHTTPResponse();
   }
   
     
