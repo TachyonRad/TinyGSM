@@ -335,8 +335,8 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
     return;
   }
   
-  bool ReadHTTPResponse() {
-    waitResponse(10000L, GF(GSM_NL "+UUHTTPCR:"));
+  bool ReadHTTPResponse(long timeout = 10000L) {
+    waitResponse(timeout, GF(GSM_NL "+UUHTTPCR:"));
     streamSkipUntil(',');
     streamSkipUntil(',');
     int8_t responseresult = streamGetIntBefore('\n');
@@ -640,24 +640,19 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
     //streamSkipUntil(',');//top length
     toplen = streamGetIntBefore(',');
     streamSkipUntil('\"');
-    char t[toplen+1];
+    topic.reserve(toplen);
     for (int i=0; i < toplen; i++) {
       while (!stream.available()){}
-      t[i] = stream.read();
+      topic += (char)stream.read();
     }
-    topic = String(t).substring(0, toplen);
-    //topic = stream.readStringUntil(',');
     streamSkipUntil(',');
     msglen = streamGetIntBefore(',');
     streamSkipUntil('\"');
-    //streamSkipUntil('\"');
-    char m[msglen+1];
+    message.reserve(msglen);
     for(int i=0; i < msglen; i++){
       while(!stream.available()) {}
-      m[i] = stream.read();
+      message += (char)stream.read();
     }
-    message = String(m).substring(0, msglen);
-    //message = stream.readStringUntil('\n');
     waitResponse();
     return true;
   }
