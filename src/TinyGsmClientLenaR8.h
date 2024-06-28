@@ -576,9 +576,13 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
       hexmessage += c[1];
     }
     sendAT(GF("+UMQTTC=2,") + String(QoS) + "," + String(int(retainAD)) + ",1,\"" + topic + "\",\"" + hexmessage + "\"");
-    waitResponse(GF("+UUMQTTC: 2,"));
+    waitResponse(10000L, GF("UUMQTTC:"));
+    streamSkipUntil(',');
     int8_t responseresult = streamGetIntBefore('\n');
-    return responseresult == 1;
+    if(responseresult == 1) {
+      return 1;
+    }
+    return 0;
   }
   
   bool MQTTPublishFile(String fileName, String topic, int8_t QoS = 0, bool retainAD = false) {
@@ -586,9 +590,13 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
       return false;
     }
     sendAT(GF("+UMQTTC=3,") + String(QoS) + "," + String(int(retainAD)) + ",\"" + topic + "\",\"" + fileName + "\"");
-    waitResponse(GF("+UUMQTTC: 3,"));
+    waitResponse(10000L, GF("UUMQTTC:"));
+    streamSkipUntil(',');
     int8_t responseresult = streamGetIntBefore('\n');
-    return responseresult == 1;
+    if(responseresult == 1) {
+      return 1;
+    }
+    return 0;
   }
   
   bool MQTTSubscribe(String topic, int8_t maxQoS = 0) {
@@ -596,13 +604,23 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
       return false;
     }
     sendAT(GF("+UMQTTC=4,") + String(maxQoS) + ",\"" + topic + "\"");
-    waitResponse(5000, topic + "\"");
-    return true;
+	int8_t responseresult = waitResponse(10000L, GF("UUMQTTC: 4,1"));
+	waitResponse();
+    if(responseresult == 1) {
+      return 1;
+    }
+    return 0;
   }
   
-  void MQTTUnsubscribe(String topic) {
+  bool MQTTUnsubscribe(String topic) {
     sendAT(GF("+UMQTTC=5,\"") + topic + "\"");
-    waitResponse();
+    waitResponse(10000L, GF("UUMQTTC:"));
+    streamSkipUntil(',');
+    int8_t responseresult = streamGetIntBefore('\n');
+    if(responseresult == 1) {
+      return 1;
+    }
+    return 0;
   }
   
   void MQTTSetClientID(String clientID) {
@@ -640,26 +658,31 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
     //streamSkipUntil(',');//top length
     toplen = streamGetIntBefore(',');
     streamSkipUntil('\"');
-    topic.reserve(toplen);
+    char t[toplen+1];
     for (int i=0; i < toplen; i++) {
       while (!stream.available()){}
-      topic += (char)stream.read();
+      t[i] = stream.read();
     }
+    topic = String(t).substring(0, toplen);
+    //topic = stream.readStringUntil(',');
     streamSkipUntil(',');
     msglen = streamGetIntBefore(',');
     streamSkipUntil('\"');
-    message.reserve(msglen);
+    //streamSkipUntil('\"');
+    char m[msglen+1];
     for(int i=0; i < msglen; i++){
       while(!stream.available()) {}
-      message += (char)stream.read();
+      m[i] = stream.read();
     }
+    message = String(m).substring(0, msglen);
+    //message = stream.readStringUntil('\n');
     waitResponse();
     return true;
   }
 
   bool MQTTLogin() {
     sendAT(GF("+UMQTTC=1"));
-    waitResponse(GF("UUMQTTC:"));
+    waitResponse(10000L, GF("UUMQTTC:"));
     streamSkipUntil(',');
     int8_t responseresult = streamGetIntBefore('\n');
     if(responseresult == 1) {
@@ -668,9 +691,15 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
     return 0;
   }
   
-  void MQTTLogout() {
+  bool MQTTLogout() {
     sendAT(GF("+UMQTTC=0"));
-    waitResponse();
+    waitResponse(5000L, GF("UUMQTTC:"));
+    streamSkipUntil(',');
+    int8_t responseresult = streamGetIntBefore('\n');
+    if(responseresult == 1) {
+      return 1;
+    }
+    return 0;
   }
 
   bool MQTTSaveProfile() {
@@ -762,6 +791,7 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
     }
     waitResponse();
   }
+
 
 ////SSL Certificates
   void addRootCert(String name, const char data[]) {
@@ -1047,8 +1077,8 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
                        const char* pwd = NULL) {
     // gprsDisconnect();
 
-    sendAT(GF("+CGATT=1"));  // attach to GPRS
-    if (waitResponse(360000L) != 1) { return false; }
+    //sendAT(GF("+CGATT=1"));  // attach to GPRS
+    //if (waitResponse(360000L) != 1) { return false; }
 
     // Using CGDCONT sets up an "external" PCP context, i.e. a data connection
     // using the external IP stack (e.g. Windows dial up) and PPP link over the
@@ -1078,14 +1108,14 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
       if (sock && sock->sock_connected) { sock->sock_connected = false; }
     }
 
-    // sendAT(GF("+CGACT=0,1"));  // Deactivate PDP context 1
+    //sendAT(GF("+CGACT=0,1"));  // Deactivate PDP context 1
     sendAT(GF("+CGACT=0"));  // Deactivate all contexts
     if (waitResponse(40000L) != 1) {
       // return false;
     }
 
-    sendAT(GF("+CGATT=0"));  // detach from GPRS
-    if (waitResponse(360000L) != 1) { return false; }
+    //sendAT(GF("+CGATT=0"));  // detach from GPRS
+    //if (waitResponse(360000L) != 1) { return false; }
 
     return true;
   }
