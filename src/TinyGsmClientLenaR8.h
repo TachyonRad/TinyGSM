@@ -400,167 +400,158 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
     
 //// FTP
   void FTPSetServerIP (String IPAddress, int port) {
-	sendAT(GF("+UFTP=0,\"") + IPAddress + "\"");
-	waitResponse();
-	sendAT(GF("+UFTP=7,\"") + String(port) + "\"");
-	waitResponse();
-	return;
+	  sendAT(GF("+UFTP=0,\"") + IPAddress + "\"");
+	  waitResponse();
+	  sendAT(GF("+UFTP=7,\"") + String(port) + "\"");
+	  waitResponse();
+	  return;
   }
   
   void FTPSetServer (String serverName, int port) {
-	sendAT(GF("+UFTP=1,\"") + serverName + "\"");
-	waitResponse();
-	sendAT(GF("+UFTP=7,\"") + String(port) + "\"");
-	waitResponse();
-	return;
+	  sendAT(GF("+UFTP=1,\"") + serverName + "\"");
+	  waitResponse();
+	  sendAT(GF("+UFTP=7,\"") + String(port) + "\"");
+	  waitResponse();
+	  return;
   }
   
   void FTPSetUserPass (String username, String password) {
-	sendAT(GF("+UFTP=2,\"") + username + "\"");
-	waitResponse();
-	sendAT(GF("+UFTP=3,\"") + password + "\"");
-	waitResponse();
-	return;
+	  sendAT(GF("+UFTP=2,\"") + username + "\"");
+	  waitResponse();
+	  sendAT(GF("+UFTP=3,\"") + password + "\"");
+	  waitResponse();
+	  return;
   }
   
   void FTPSetAccount (String account) {
-	sendAT(GF("+UFTP=4,\"") + account + "\"");
-	waitResponse();
-	return;
+	  sendAT(GF("+UFTP=4,\"") + account + "\"");
+	  waitResponse();
+	  return;
   }
   
   void FTPSetTimeout (int inactivityTimeoutSeconds) {
-	sendAT(GF("+UFTP=5,\"") + String(inactivityTimeoutSeconds) + "\"");
-	waitResponse();
-	return;
+	  sendAT(GF("+UFTP=5,\"") + String(inactivityTimeoutSeconds) + "\"");
+	  waitResponse();
+	  return;
   }
   
   void FTPSetPassiveMode (bool passiveModeON) {
     if (passiveModeON) {
-	  sendAT(GF("+UFTP=6,1"));
-	} else {
+	    sendAT(GF("+UFTP=6,1"));
+	  } else {
       sendAT(GF("+UFTP=6,0"));
-	}
-	waitResponse();
-	return;
+	  }
+	  waitResponse();
+	  return;
   }
   
   void FTPUseSSL (String certName) {
-	sendAT(GF("+USECPRF=1,0,1"));
-	waitResponse();
-	sendAT(GF("+USECPRF=1,3,\"") + certName + "\"");
-	waitResponse();
-	sendAT(GF("+UFTP=8,1,1"));
-	waitResponse();
-	return;
+    sendAT(GF("+USECPRF=1,0,1"));
+    waitResponse();
+    sendAT(GF("+USECPRF=1,3,\"") + certName + "\"");
+    waitResponse();
+    sendAT(GF("+UFTP=8,1,1"));
+    waitResponse();
+    return;
   }
   
   void FTPUseSSL (String certName, String clientCertName, String clientKeyName, String password = "") {
-	sendAT(GF("+USECPRF=1,0,1"));
-	waitResponse();
-	sendAT(GF("+USECPRF=1,3,\"") + certName + "\"");
-	waitResponse();
-	sendAT(GF("+USECPRF=1,5,\"") + clientCertName + "\"");
-	waitResponse();
-	sendAT(GF("+USECPRF=1,6,\"") + clientKeyName + "\"");
-	waitResponse();
-	if (password != "") {
-	  sendAT(GF("+USECPRF=1,7,\"") + password + "\"");
-	  waitResponse();
-	}
-	sendAT(GF("+UFTP=8,1,1"));
-	waitResponse();
-	return;
+    sendAT(GF("+USECPRF=1,0,1"));
+    waitResponse();
+    sendAT(GF("+USECPRF=1,3,\"") + certName + "\"");
+    waitResponse();
+    sendAT(GF("+USECPRF=1,5,\"") + clientCertName + "\"");
+    waitResponse();
+    sendAT(GF("+USECPRF=1,6,\"") + clientKeyName + "\"");
+    waitResponse();
+    if (password != "") {
+      sendAT(GF("+USECPRF=1,7,\"") + password + "\"");
+      waitResponse();
+    }
+    sendAT(GF("+UFTP=8,1,1"));
+    waitResponse();
+    return;
   } 
   
   bool FTPLogout() {
     sendAT(GF("+UFTPC=0")); 
-	waitResponse(10000L, GF(GSM_NL "+UUFTPCR:"));
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
-	waitResponse();
-	if(responseresult == 1) return 1;
-	return 0;
+	  waitResponse(10000L, GF(GSM_NL "+UUFTPCR:"));
+	  streamSkipUntil(',');
+	  int8_t responseresult = streamGetIntBefore('\n');
+	  waitResponse();
+	  return responseresult == 1;
   }
   
   bool FTPLogin() {
     sendAT(GF("+UFTPC=1")); 
-	waitResponse(10000L, GF(GSM_NL "+UUFTPCR:"));
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
-	waitResponse();
-	if(responseresult == 1) return 1;
-	return 0;
+	  waitResponse(10000L, GF(GSM_NL "+UUFTPCR:"));
+	  streamSkipUntil(',');
+	  int8_t responseresult = streamGetIntBefore('\n');
+	  waitResponse();
+	  return responseresult == 1;
   }
   
   bool FTPDeleteFile (String remoteFileName) {
     sendAT(GF("+UFTPC=2,\"") + remoteFileName + "\""); 
-	waitResponse(10000L, GF(GSM_NL "+UUFTPCR:"));
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
-	waitResponse();
-	if(responseresult == 1) return 1;
-	return 0;
+	  waitResponse(10000L, GF(GSM_NL "+UUFTPCR:"));
+	  streamSkipUntil(',');
+	  int8_t responseresult = streamGetIntBefore('\n');
+	  waitResponse();
+	  return responseresult == 1;
   }
   
   bool FTPRenameFile (String remoteFileName, String newRemoteFileName) {
     sendAT(GF("+UFTPC=3,\"") + remoteFileName + "\",\"" + newRemoteFileName + "\""); 
-	waitResponse(10000L, GF(GSM_NL "+UUFTPCR:"));
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
-	waitResponse();
-	if(responseresult == 1) return 1;
-	return 0;
+	  waitResponse(10000L, GF(GSM_NL "+UUFTPCR:"));
+	  streamSkipUntil(',');
+	  int8_t responseresult = streamGetIntBefore('\n');
+	  waitResponse();
+	  return responseresult == 1;
   }
   
   bool FTPDownloadFile (String remoteFileName, String localFileName) {
     sendAT(GF("+UFTPC=4,\"") + remoteFileName + "\",\"" + localFileName + "\""); 
-	waitResponse(10000L, GF(GSM_NL "+UUFTPCR:"));
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
-	waitResponse();
-	if(responseresult == 1) return 1;
-	return 0;
+	  waitResponse(10000L, GF(GSM_NL "+UUFTPCR:"));
+	  streamSkipUntil(',');
+	  int8_t responseresult = streamGetIntBefore('\n');
+	  waitResponse();
+	  return responseresult == 1;
   }
   
   bool FTPUploadFile (String localFileName, String remoteFileName) {
     sendAT(GF("+UFTPC=5,\"") + localFileName + "\",\"" + remoteFileName + "\""); 
-	waitResponse(10000L, GF(GSM_NL "+UUFTPCR:"));
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
-	waitResponse();
-	if(responseresult == 1) return 1;
-	return 0;
+	  waitResponse(10000L, GF(GSM_NL "+UUFTPCR:"));
+	  streamSkipUntil(',');
+	  int8_t responseresult = streamGetIntBefore('\n');
+	  waitResponse();
+	  return responseresult == 1;
   }
   
   bool FTPChangeWorkingDir (String directoryName) {
     sendAT(GF("+UFTPC=8,\"") + directoryName + "\""); 
-	waitResponse(10000L, GF(GSM_NL "+UUFTPCR:"));
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
-	waitResponse();
-	if(responseresult == 1) return 1;
-	return 0;
+	  waitResponse(10000L, GF(GSM_NL "+UUFTPCR:"));
+	  streamSkipUntil(',');
+	  int8_t responseresult = streamGetIntBefore('\n');
+	  waitResponse();
+	  return responseresult == 1;
   }
   
   bool FTPCreateDir(String directoryName) {
     sendAT(GF("+UFTPC=10,\"") + directoryName + "\""); 
-	waitResponse(10000L, GF(GSM_NL "+UUFTPCR:"));
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
-	waitResponse();
-	if(responseresult == 1) return 1;
-	return 0;
+	  waitResponse(10000L, GF(GSM_NL "+UUFTPCR:"));
+	  streamSkipUntil(',');
+	  int8_t responseresult = streamGetIntBefore('\n');
+	  waitResponse();
+	  return responseresult == 1;
   }
   
   bool FTPDeleteDir (String directoryName) {
     sendAT(GF("+UFTPC=11,\"") + directoryName + "\""); 
-	waitResponse(10000L, GF(GSM_NL "+UUFTPCR:"));
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
-	waitResponse();
-	if(responseresult == 1) return 1;
-	return 0;
+	  waitResponse(10000L, GF(GSM_NL "+UUFTPCR:"));
+	  streamSkipUntil(',');
+	  int8_t responseresult = streamGetIntBefore('\n');
+	  waitResponse();
+	  return responseresult == 1;
   }
   
 //// MQTT
@@ -579,10 +570,7 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
     waitResponse(10000L, GF("UUMQTTC:"));
     streamSkipUntil(',');
     int8_t responseresult = streamGetIntBefore('\n');
-    if(responseresult == 1) {
-      return 1;
-    }
-    return 0;
+    return responseresult == 1;
   }
   
   bool MQTTPublishFile(String fileName, String topic, int8_t QoS = 0, bool retainAD = false) {
@@ -593,10 +581,7 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
     waitResponse(10000L, GF("UUMQTTC:"));
     streamSkipUntil(',');
     int8_t responseresult = streamGetIntBefore('\n');
-    if(responseresult == 1) {
-      return 1;
-    }
-    return 0;
+    return responseresult == 1;
   }
   
   bool MQTTSubscribe(String topic, int8_t maxQoS = 0) {
@@ -604,12 +589,9 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
       return false;
     }
     sendAT(GF("+UMQTTC=4,") + String(maxQoS) + ",\"" + topic + "\"");
-	int8_t responseresult = waitResponse(10000L, GF("UUMQTTC: 4,1"));
-	waitResponse();
-    if(responseresult == 1) {
-      return 1;
-    }
-    return 0;
+	  int8_t responseresult = waitResponse(10000L, GF("UUMQTTC: 4,1"));
+	  waitResponse();
+    return responseresult == 1;
   }
   
   bool MQTTUnsubscribe(String topic) {
@@ -617,10 +599,7 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
     waitResponse(10000L, GF("UUMQTTC:"));
     streamSkipUntil(',');
     int8_t responseresult = streamGetIntBefore('\n');
-    if(responseresult == 1) {
-      return 1;
-    }
-    return 0;
+    return responseresult == 1;
   }
   
   void MQTTSetClientID(String clientID) {
@@ -648,7 +627,7 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
   bool MQTTReadMsg(String &topic, String &message) {
     sendAT(GF("+UMQTTC=6,1"));
     int toplen = 0, msglen = 0;
-    if (waitResponse(GF("+UMQTTC:")) != 1) {
+    if (waitResponse(500L, GF("+UMQTTC:")) != 1) {
       return false;
     }
     
@@ -680,10 +659,7 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
     waitResponse(10000L, GF("UUMQTTC:"));
     streamSkipUntil(',');
     int8_t responseresult = streamGetIntBefore('\n');
-    if(responseresult == 1) {
-      return 1;
-    }
-    return 0;
+    return responseresult == 1;
   }
   
   bool MQTTLogout() {
@@ -691,15 +667,12 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
     waitResponse(5000L, GF("UUMQTTC:"));
     streamSkipUntil(',');
     int8_t responseresult = streamGetIntBefore('\n');
-    if(responseresult == 1) {
-      return 1;
-    }
-    return 0;
+    return responseresult == 1;
   }
 
   bool MQTTSaveProfile() {
     sendAT(GF("+UMQTTNV=2"));
-    waitResponse(GF("UMQTTNV:"));
+    waitResponse(5000L, GF("UMQTTNV:"));
     streamSkipUntil(',');
     int8_t responseresult = streamGetIntBefore('\n');
     waitResponse();
@@ -708,7 +681,7 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
   
   bool MQTTLoadProfile() {
     sendAT(GF("+UMQTTNV=1"));
-    waitResponse(GF("UMQTTNV:"));
+    waitResponse(5000L, GF("UMQTTNV:"));
     streamSkipUntil(',');
     int8_t responseresult = streamGetIntBefore('\n');
     return responseresult == 1;
