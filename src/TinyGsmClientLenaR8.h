@@ -217,6 +217,39 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
 ////////////////////////////////////////////////
  public:
  
+ //// Send SMS Message
+ 
+  bool SMSSendMsg (String phoneNumber, String message){
+    for (int i=0; i < phoneNumber.length(); i++){
+	  if (!isDigit(phoneNumber.charAt(i))) return 0;
+	}
+	sendAT(GF("+CMGF=1"));
+	waitResponse();
+	sendAT(GF("+CMGS=\"") + phoneNumber + "\"");
+	waitResponse(">");
+	stream.print(message);
+	stream.write(0x1A);			//Ctrl-Z
+	waitResponse(10000L, GF("+CMGS:"));
+	waitResponse();
+	return 1;
+  }
+  
+ //// 4G Check
+ 
+  bool is4G() {
+    sendAT(GF("+COPS?"));
+	waitResponse(10000L, GF("+COPS:"));
+	streamSkipUntil(',');
+	streamSkipUntil(',');
+	streamSkipUntil(',');
+	int8_t responseresult = streamGetIntBefore('\n');
+    waitResponse();
+    return responseresult == 7;
+  }
+ 
+ 
+/* FAULTY PIN CODE
+
   bool setSimPIN (String pin) {
     if (pin.length() != 4) return 0;
     for (int i=0; i<4; i++){
@@ -236,6 +269,7 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
     waitResponse();
     return 1;
   }
+*/
  
 //// HTTP
   void HTTPResetProfile() {
@@ -590,7 +624,7 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
     }
     sendAT(GF("+UMQTTC=4,") + String(maxQoS) + ",\"" + topic + "\"");
 	  int8_t responseresult = waitResponse(10000L, GF("UUMQTTC: 4,1"));
-	  waitResponse();
+	  streamSkipUntil('\n');
     return responseresult == 1;
   }
   
