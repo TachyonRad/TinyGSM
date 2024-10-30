@@ -25,6 +25,7 @@ class TinyGsmModem {
   }
   template <typename... Args>
   inline void sendAT(Args... cmd) {
+    while (thisModem().stream.available()) thisModem().stream.read();
     thisModem().streamWrite("AT", cmd..., thisModem().gsmNL);
     thisModem().stream.flush();
     TINY_GSM_YIELD(); /* DBG("### AT:", cmd...); */
