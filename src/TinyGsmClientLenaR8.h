@@ -222,7 +222,7 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
       String cell_info;
       sendAT(GF("+CCED=0,1"));
       if (!waitResponse(10000L, GF("+CCED:"))) return cell_info;
-      cell_info = stream.readStringUntil('\n');
+      cell_info = stream.readStringUntil('\r\n');
       waitResponse();
       return cell_info;      
   }
