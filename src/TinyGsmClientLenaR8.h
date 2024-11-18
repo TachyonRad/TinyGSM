@@ -106,7 +106,7 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
       uint8_t oldMux = mux;
       sock_connected = at->modemConnect(host, port, &mux, false, timeout_s);
       if (mux != oldMux) {
-        DBG("WARNING:  Mux number changed from", oldMux, "to", mux);
+        //DBG("WARNING:  Mux number changed from", oldMux, "to", mux);
         at->sockets[oldMux] = NULL;
       }
       at->sockets[mux] = this;
@@ -136,9 +136,9 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
       // Attempting to close a socket that is already closed with a synchronous
       // close quickly returns an error.
       if (at->supportsAsyncSockets && sock_connected) {
-        DBG("### Closing socket asynchronously!  Socket might remain open "
-            "until arrival of +UUSOCL:",
-            mux);
+       // DBG("### Closing socket asynchronously!  Socket might remain open "
+       //     "until arrival of +UUSOCL:",
+       //     mux);
         // faster asynchronous close
         at->sendAT(GF("+USOCL="), mux, GF(",1"));
         // NOTE:  can take up to 120s to get a response
@@ -184,7 +184,7 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
       uint8_t oldMux = mux;
       sock_connected = at->modemConnect(host, port, &mux, true, timeout_s);
       if (mux != oldMux) {
-        DBG("WARNING:  Mux number changed from", oldMux, "to", mux);
+        //DBG("WARNING:  Mux number changed from", oldMux, "to", mux);
         at->sockets[oldMux] = NULL;
       }
       at->sockets[mux] = this;
@@ -219,42 +219,40 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
  
  //// Get Cell Info
   String GetCellInfo() {
-      String cell_info;
-      sendAT(GF("+CCED=0,1"));
-      if (!waitResponse(10000L, GF("+CCED:"))) return cell_info;
-      cell_info = stream.readStringUntil('\r');
-      waitResponse();
-      return cell_info;      
+    String cell_info;
+    sendAT(GF("+CCED=0,1"));
+    if (!waitResponse(10000L, GF("+CCED:"))) return cell_info;
+    cell_info = stream.readStringUntil('\r');
+    waitResponse();
+    return cell_info;      
   }
- 
- 
  
  //// Send SMS Message
  
   bool SMSSendMsg (String phoneNumber, String message){
     for (int i=0; i < phoneNumber.length(); i++){
-	  if (!isDigit(phoneNumber.charAt(i))) return 0;
-	}
-	sendAT(GF("+CMGF=1"));
-	waitResponse();
-	sendAT(GF("+CMGS=\"") + phoneNumber + "\"");
-	waitResponse(">");
-	stream.print(message);
-	stream.write(0x1A);			//Ctrl-Z
-	waitResponse(10000L, GF("+CMGS:"));
-	waitResponse();
-	return 1;
+	    if (!isDigit(phoneNumber.charAt(i))) return 0;
+    }
+    sendAT(GF("+CMGF=1"));
+    waitResponse();
+    sendAT(GF("+CMGS=\"") + phoneNumber + "\"");
+    waitResponse(">");
+    stream.print(message);
+    stream.write(0x1A);			//Ctrl-Z
+    waitResponse(10000L, GF("+CMGS:"));
+    waitResponse();
+    return 1;
   }
   
  //// 4G Check
  
   bool is4G() {
     sendAT(GF("+COPS?"));
-	waitResponse(10000L, GF("+COPS:"));
-	streamSkipUntil(',');
-	streamSkipUntil(',');
-	streamSkipUntil(',');
-	int8_t responseresult = streamGetIntBefore('\n');
+    waitResponse(10000L, GF("+COPS:"));
+    streamSkipUntil(',');
+    streamSkipUntil(',');
+    streamSkipUntil(',');
+    int8_t responseresult = streamGetIntBefore('\n');
     waitResponse();
     return responseresult == 7;
   }
@@ -959,8 +957,8 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
   }
 
   bool initImpl(const char* pin = NULL) {
-    DBG(GF("### TinyGSM Version:"), TINYGSM_VERSION);
-    DBG(GF("### TinyGSM Compiled Module:  TinyGsmClientLenaR8"));
+    //DBG(GF("### TinyGSM Version:"), TINYGSM_VERSION);
+    //DBG(GF("### TinyGSM Compiled Module:  TinyGsmClientLenaR8"));
 
     if (!testAT()) { return false; }
 
@@ -975,7 +973,7 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
     waitResponse();
 
     String modemName = getModemName();
-    DBG(GF("### Modem:"), modemName);
+    //DBG(GF("### Modem:"), modemName);
     has2GFallback = true;
     supportsAsyncSockets = true;
 
@@ -1010,7 +1008,7 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
     res2.trim();
 
     String name = res1 + String(' ') + res2;
-    DBG("### Modem:", name);
+    //DBG("### Modem:", name);
     // if (!name.startsWith("u-blox LENA-R8")) {
     //   DBG("### WARNING:  You are using the wrong TinyGSM modem!");
     // }
@@ -1401,14 +1399,14 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
     // Use an asynchronous open to reduce the number of terminal freeze-ups
     // This is still blocking until the URC arrives
     if (supportsAsyncSockets) {
-      DBG("### Opening socket asynchronously!  Socket cannot be used until "
-          "the URC '+UUSOCO' appears.");
+      //DBG("### Opening socket asynchronously!  Socket cannot be used until "
+      //    "the URC '+UUSOCO' appears.");
       sendAT(GF("+USOCO="), *mux, ",\"", host, "\",", port, ",1");
       if (waitResponse(timeout_ms - (millis() - startMillis),
                        GF(GSM_NL "+UUSOCO:")) == 1) {
         streamGetIntBefore(',');  // skip repeated mux
         int8_t connection_status = streamGetIntBefore('\n');
-        DBG("### Waited", millis() - startMillis, "ms for socket to open");
+        //DBG("### Waited", millis() - startMillis, "ms for socket to open");
 
         //LENA-r8 start
         sendAT(GF("+USOSO="), *mux ,",65535,8,1");					//LENA-R8 keep socket alive
@@ -1423,8 +1421,8 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
 
         return (0 == connection_status);
       } else {
-        DBG("### Waited", millis() - startMillis,
-            "but never got socket open notice");
+       // DBG("### Waited", millis() - startMillis,
+       //     "but never got socket open notice");
         return false;
       }
     } else {
@@ -1612,14 +1610,14 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
             if (len >= 0 && len <= 1024) { sockets[mux]->sock_available = len; }
           }
           data = "";
-          DBG("### URC Data Received:", len, "on", mux);
+          // DBG("### URC Data Received:", len, "on", mux);
         } else if (data.endsWith(GF("+UUSOCL:"))) {
           int8_t mux = streamGetIntBefore('\n');
           if (mux >= 0 && mux < TINY_GSM_MUX_COUNT && sockets[mux]) {
             sockets[mux]->sock_connected = false;
           }
           data = "";
-          DBG("### URC Sock Closed: ", mux);
+         // DBG("### URC Sock Closed: ", mux);
         } else if (data.endsWith(GF("+UUSOCO:"))) {
           int8_t mux          = streamGetIntBefore('\n');
           int8_t socket_error = streamGetIntBefore('\n');
@@ -1628,14 +1626,14 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
             sockets[mux]->sock_connected = true;
           }
           data = "";
-          DBG("### URC Sock Opened: ", mux);
+         // DBG("### URC Sock Opened: ", mux);
         }
       }
     } while (millis() - startMillis < timeout_ms);
   finish:
     if (!index) {
       data.trim();
-      if (data.length()) { DBG("### Unhandled:", data); }
+      if (data.length()) {}  //DBG("### Unhandled:", data); }
       data = "";
     }
     // data.replace(GSM_NL, "/");
