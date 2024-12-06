@@ -222,6 +222,40 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
     String cell_info;
     sendAT(GF("+CCED=0,1"));
     if (!waitResponse(10000L, GF("+CCED:"))) return cell_info;
+    cell_info = stream.readStringUntil(' ');
+    if (cell_info == "LTE") {
+        cell_info += " current cell:";
+        streamSkipUntil(':');
+        cell_info += stream.readStringUntil(',');
+        cell_info += "-" + stream.readStringUntil(',');
+        streamSkipUntil(',');
+        streamSkipUntil(',');
+        streamSkipUntil(',');
+        streamSkipUntil(',');
+        streamSkipUntil(',');
+        cell_info += "-" + stream.readStringUntil(',');
+    } else {
+        cell_info += " current cell:";
+        streamSkipUntil(':');
+        cell_info += stream.readStringUntil(',');
+        cell_info += "-" + stream.readStringUntil(',') + "-";
+        String lac = stream.readStringUntil(',');
+        char *eptr;
+        char lacchar[lac.length() + 1];
+        lac.toCharArray(lacchar, lac.length() + 1);
+        int lacint = (int)strtol(lacchar, &eptr, 16);
+        cell_info += String(lacint);
+        cell_info += "-" + stream.readStringUntil(',');
+    }
+    waitResponse();
+    return cell_info;      
+  }
+  
+ //// Get Raw Cell Info
+  String GetRawCellInfo() {
+    String cell_info;
+    sendAT(GF("+CCED=0,1"));
+    if (!waitResponse(10000L, GF("+CCED:"))) return cell_info;
     cell_info = stream.readStringUntil('\r');
     waitResponse();
     return cell_info;      
