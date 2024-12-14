@@ -233,7 +233,13 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
         streamSkipUntil(',');
         streamSkipUntil(',');
         streamSkipUntil(',');
-        cell_info += "-" + stream.readStringUntil(',');
+        cell_info += "-";
+        String lac = stream.readStringUntil(',');
+        char *eptr;
+        char lacchar[lac.length() + 1];
+        lac.toCharArray(lacchar, lac.length() + 1);
+        int lacint = (int)strtol(lacchar, &eptr, 16);
+        cell_info += String(lacint);
     } else {
         cell_info += " current cell:";
         streamSkipUntil(':');
@@ -245,7 +251,13 @@ class TinyGsmLenaR8 : public TinyGsmModem<TinyGsmLenaR8>,
         lac.toCharArray(lacchar, lac.length() + 1);
         int lacint = (int)strtol(lacchar, &eptr, 16);
         cell_info += String(lacint);
-        cell_info += "-" + stream.readStringUntil(',');
+        cell_info += "-";
+        lac = stream.readStringUntil(',');
+        char *eptr2;
+        char lacchar2[lac.length() + 1];
+        lac.toCharArray(lacchar2, lac.length() + 1);
+        int lacint2 = (int)strtol(lacchar2, &eptr2, 16);
+        cell_info += String(lacint2);
     }
     waitResponse();
     return cell_info;      
